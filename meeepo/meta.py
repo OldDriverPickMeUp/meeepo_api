@@ -1,6 +1,5 @@
 from tornado.web import RequestHandler
 from tornado.log import access_log as logger
-from tornado.gen import coroutine
 
 from .view import BasicView, ChainView, OptionView, JsonView
 from .error import CoreError
@@ -9,8 +8,7 @@ from .error import CoreError
 class MetaHandler(RequestHandler):
     methods = None
 
-    @coroutine
-    def get(self, *args, **kwargs):
+    async def get(self, *args, **kwargs):
         try:
             method_info = self.methods.get('get')
             if method_info is None:
@@ -33,7 +31,7 @@ class MetaHandler(RequestHandler):
                 return
 
             try:
-                view_obj = yield call_func(request_obj, *args, **kwargs)
+                view_obj = await call_func(request_obj, *args, **kwargs)
             except CoreError as e:
                 logger.error('%s:%s' % (e.__class__.__name__, e.message))
                 if getattr(e, "can_out_put", None):
@@ -52,8 +50,7 @@ class MetaHandler(RequestHandler):
             logger.exception(e)
             self.send_error(status_code=500, reason='internal error')
 
-    @coroutine
-    def post(self, *args, **kwargs):
+    async def post(self, *args, **kwargs):
         try:
             method_info = self.methods.get('post')
             if method_info is None:
@@ -75,7 +72,7 @@ class MetaHandler(RequestHandler):
                 view_obj.render(request=self)
                 return
             try:
-                view_obj = yield call_func(request_obj, *args, **kwargs)
+                view_obj = await call_func(request_obj, *args, **kwargs)
             except CoreError as e:
                 logger.error('%s:%s' % (e.__class__.__name__, e.message))
                 if getattr(e, "can_out_put", None):
